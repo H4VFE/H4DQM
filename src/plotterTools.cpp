@@ -1376,11 +1376,22 @@ void plotterTools::initDigiPlots(){
 
   std::set<int> channels = listElements (treeStruct_.digiChannel,  treeStruct_.nDigiSamples) ;
   std::set<int> groups = listElements (treeStruct_.digiGroup,  treeStruct_.nDigiSamples) ;
-  
-  int xNbins = 1024 ;
-  float xmin = 0 ;
-  float xmax = 1024 ;
 
+  int max_entry = 0;  
+  uint nentries = 1000000;  
+  for (unsigned iSample = 0; iSample < nentries and (iSample<1 or treeStruct_.digiSampleIndex[iSample] == max_entry+1 or treeStruct_.digiSampleIndex[iSample]==0 or treeStruct_.digiSampleIndex[iSample-1]+1 == treeStruct_.digiSampleIndex[iSample]); ++iSample) //add to nentries and if max_entry isn't increasing by one each time (weird stuff happens once it runs out of sample)
+    {
+    if (treeStruct_.digiSampleIndex[iSample] >max_entry)//== max_entry+1)
+      {
+      max_entry = treeStruct_.digiSampleIndex[iSample];
+//      cout<< "Plot x-axis max entry: "<<max_entry<<endl;
+      }
+    }
+  cout<<"Final Plot x-axis max entry: "<<max_entry<<endl;
+  int xNbins = max_entry ;
+  float xmin = 0 ;
+  float xmax = float(max_entry) ;
+  
   int yNbins = 4096;
   float ymin = 0;
   float ymax = 4096;
@@ -1814,12 +1825,12 @@ void  plotterTools::Loop()
 	    it->second->waveform->offset(wave_pedestal.pedestal);
 
 	    it->second->waveform->rescale(-1); 
-	    wave_max=it->second->waveform->max_amplitude(50,900,5); //find max amplitude between 50 and 900 samples
+	    wave_max=it->second->waveform->max_amplitude(0, 345, 5); //find max amplitude between 50 and 900 samples
 	    if (wave_max.max_amplitude<20)
 	      {
 		//try not inverting if signal is positive
 		it->second->waveform->rescale(-1); 
-		Waveform::max_amplitude_informations wave_max_inv=it->second->waveform->max_amplitude(50,900,5); //find max amplitude between 50 and 900 samples
+		Waveform::max_amplitude_informations wave_max_inv=it->second->waveform->max_amplitude(0, 345, 5); //find max amplitude between 50 and 900 samples
 		if (wave_max_inv.max_amplitude>wave_max.max_amplitude)
 		    wave_max=wave_max_inv;
 		else //stay with negative signals
@@ -1830,7 +1841,7 @@ void  plotterTools::Loop()
 	    varplots[Form("%s_pedestal",thisname.Data())]->Fill(wave_pedestal.pedestal,1.);
 	    varplots[Form("%s_pedestal_rms",thisname.Data())]->Fill(wave_pedestal.rms,1.);
 	    varplots[Form("%s_max_amplitude",thisname.Data())]->Fill(wave_max.max_amplitude,1.);
-	    varplots[Form("%s_charge_integrated",thisname.Data())]->Fill(it->second->waveform->charge_integrated(0,900),1.); // pedestal already subtracted
+	    varplots[Form("%s_charge_integrated",thisname.Data())]->Fill(it->second->waveform->charge_integrated(0,345),1.); // pedestal already subtracted
 	    varplots[Form("%s_time_at_max",thisname.Data())]->Fill(wave_max.time_at_max*1.e9,1.);
 	    varplots[Form("%s_time_at_frac30",thisname.Data())]->Fill(it->second->waveform->time_at_frac(wave_max.time_at_max-1.3e-8,wave_max.time_at_max,0.3,wave_max,7)*1.e9,1.);
 	    varplots[Form("%s_time_at_frac50",thisname.Data())]->Fill(it->second->waveform->time_at_frac(wave_max.time_at_max-1.3e-8,wave_max.time_at_max,0.5,wave_max,7)*1.e9,1.);
@@ -1856,18 +1867,18 @@ void  plotterTools::Loop()
 	      if(fibersOn_[hodoY2][i]==1 && y2!=-1) { y2 = -1; break; }
 	    }
 	    
-	    varplots[Form("%s_charge_integrated_vs_hodoX1",thisname.Data())]->Fill(x1,it->second->waveform->charge_integrated(0,900)); // pedestal already subtracted
-	    varplots[Form("%s_charge_integrated_vs_hodoY1",thisname.Data())]->Fill(y1,it->second->waveform->charge_integrated(0,900)); // pedestal already subtracted
-	    varplots[Form("%s_charge_integrated_vs_hodoX2",thisname.Data())]->Fill(x2,it->second->waveform->charge_integrated(0,900)); // pedestal already subtracted
-	    varplots[Form("%s_charge_integrated_vs_hodoY2",thisname.Data())]->Fill(y2,it->second->waveform->charge_integrated(0,900)); // pedestal already subtracted
+	    varplots[Form("%s_charge_integrated_vs_hodoX1",thisname.Data())]->Fill(x1,it->second->waveform->charge_integrated(0,345)); // pedestal already subtracted
+	    varplots[Form("%s_charge_integrated_vs_hodoY1",thisname.Data())]->Fill(y1,it->second->waveform->charge_integrated(0,345)); // pedestal already subtracted
+	    varplots[Form("%s_charge_integrated_vs_hodoX2",thisname.Data())]->Fill(x2,it->second->waveform->charge_integrated(0,345)); // pedestal already subtracted
+	    varplots[Form("%s_charge_integrated_vs_hodoY2",thisname.Data())]->Fill(y2,it->second->waveform->charge_integrated(0,345)); // pedestal already subtracted
 
-	    varplots[Form("%s_charge_integrated_vs_TDCrecoX",thisname.Data())]->Fill(tdc_recox,it->second->waveform->charge_integrated(0,900)); // pedestal already subtracted
-	    varplots[Form("%s_charge_integrated_vs_TDCrecoY",thisname.Data())]->Fill(tdc_recoy,it->second->waveform->charge_integrated(0,900)); // pedestal already subtracted
+	    varplots[Form("%s_charge_integrated_vs_TDCrecoX",thisname.Data())]->Fill(tdc_recox,it->second->waveform->charge_integrated(0,345)); // pedestal already subtracted
+	    varplots[Form("%s_charge_integrated_vs_TDCrecoY",thisname.Data())]->Fill(tdc_recoy,it->second->waveform->charge_integrated(0,345)); // pedestal already subtracted
 	    
 	    
 	    int x = getDigiChannelX(it->second->name);
 	    int y = getDigiChannelY(it->second->name);
-	    varplots["allCh_charge_integrated_map"]->Fill2D(x,y,it->second->waveform->charge_integrated(0,900)); // pedestal already subtracted	
+	    varplots["allCh_charge_integrated_map"]->Fill2D(x,y,it->second->waveform->charge_integrated(0,345)); // pedestal already subtracted	
 	    varplots["allCh_max_amplitude_map"]->Fill2D(x,y,wave_max.max_amplitude); // pedestal already subtracted
 	    varplots["allCh_pedestal_map"]->Fill2D(x,y,wave_pedestal.pedestal); // pedestal already subtracted
 	    varplots["allCh_pedestal_rms_map"]->Fill2D(x,y,wave_pedestal.rms); // pedestal already subtracted
